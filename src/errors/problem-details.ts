@@ -10,9 +10,7 @@ export interface ValidationProblemDetails extends ProblemDetails {
   errors: unknown[];
 }
 
-export function createProblemDetails(
-  problem: ProblemDetails
-): ProblemDetails {
+export function createProblemDetails(problem: ProblemDetails): ProblemDetails {
   return problem;
 }
 

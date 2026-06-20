@@ -7,7 +7,8 @@ import {
 import { ProductNotFoundError } from '../errors/product-not-found-error.js';
 import { DuplicateProductSkuError } from '../repositories/products.repository.js';
 
-const invalidRequestType = 'https://product-lookup.dev/problems/invalid-request';
+const invalidRequestType =
+  'https://product-lookup.dev/problems/invalid-request';
 const duplicateProductSkuType =
   'https://product-lookup.dev/problems/duplicate-product-sku';
 const productNotFoundType =
