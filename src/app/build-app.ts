@@ -1,0 +1,20 @@
+import { type TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
+import Fastify from 'fastify';
+import type { FastifyServerOptions } from 'fastify';
+
+import type { AppConfig } from '../config/env.js';
+
+import { createLoggerOptions } from './logger.js';
+import { registerRoutes } from './register-routes.js';
+
+export function buildApp(config: AppConfig) {
+  const options: FastifyServerOptions = {
+    logger: createLoggerOptions(config)
+  };
+
+  const app = Fastify(options).withTypeProvider<TypeBoxTypeProvider>();
+
+  app.register(registerRoutes);
+
+  return app;
+}
