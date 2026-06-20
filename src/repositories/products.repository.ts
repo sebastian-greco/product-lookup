@@ -130,8 +130,7 @@ export function createProductsRepository(
     async list(options) {
       const normalizedOptions = normalizeListOptions(options);
       const whereClause = buildListWhereClause(normalizedOptions);
-      const offset =
-        (normalizedOptions.page - 1) * normalizedOptions.pageSize;
+      const offset = (normalizedOptions.page - 1) * normalizedOptions.pageSize;
 
       const [items, totalRows] = await Promise.all([
         db
