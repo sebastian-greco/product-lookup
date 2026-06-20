@@ -65,8 +65,13 @@ src/
     Problem Details helpers and error mapping
   ids/
     entity identifier helpers
-  tests/
+test/
+  helpers/
     shared test helpers
+  integration/
+    integration test suites
+  unit/
+    focused unit test suites
 ```
 
 Within each layer, keep domain files explicit and grouped by name. For example:
