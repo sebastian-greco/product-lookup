@@ -144,4 +144,45 @@ describe('products repository', () => {
     expect(secondPage.items).toHaveLength(1);
     expect(secondPage.items[0]?.name).toBe('Charlie iPhone');
   });
+
+  it('normalizes pagination defaults, trims search, and caps oversized page sizes', async () => {
+    const repository = createProductsRepository(app.db);
+
+    await repository.create({
+      sku: 'SKU-201',
+      name: 'Alpha Desk',
+      category: 'Furniture',
+      price: 499.99,
+      currency: 'EUR'
+    });
+    await repository.create({
+      sku: 'SKU-202',
+      name: 'Bravo Desk',
+      category: 'Furniture',
+      price: 599.99,
+      currency: 'EUR'
+    });
+
+    const defaulted = await repository.list({
+      page: 0,
+      pageSize: 0,
+      search: '  desk  '
+    });
+
+    expect(defaulted.totalCount).toBe(2);
+    expect(defaulted.items).toHaveLength(2);
+    expect(defaulted.items.map((item) => item.name)).toEqual([
+      'Alpha Desk',
+      'Bravo Desk'
+    ]);
+
+    const capped = await repository.list({
+      page: 1,
+      pageSize: 1000,
+      category: 'Furniture'
+    });
+
+    expect(capped.totalCount).toBe(2);
+    expect(capped.items).toHaveLength(2);
+  });
 });

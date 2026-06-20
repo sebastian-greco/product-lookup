@@ -6,6 +6,23 @@ import { createProductId, type ProductId } from '../ids/index.js';
 
 type ProductRow = typeof productsTable.$inferSelect;
 
+const DEFAULT_PAGE = 1;
+const DEFAULT_PAGE_SIZE = 20;
+const MAX_PAGE_SIZE = 100;
+
+const productRecordSelection = {
+  id: productsTable.id,
+  sku: productsTable.sku,
+  name: productsTable.name,
+  description: productsTable.description,
+  category: productsTable.category,
+  price: productsTable.price,
+  currency: productsTable.currency,
+  status: productsTable.status,
+  createdAt: productsTable.createdAt,
+  updatedAt: productsTable.updatedAt
+};
+
 export type ProductRecord = Omit<ProductRow, 'id'> & {
   id: ProductId;
 };
@@ -23,8 +40,8 @@ export interface CreateProductInput {
 }
 
 export interface ListProductsOptions {
-  page: number;
-  pageSize: number;
+  page?: number;
+  pageSize?: number;
   category?: string;
   status?: ProductStatus;
   search?: string;
@@ -33,6 +50,14 @@ export interface ListProductsOptions {
 export interface ListProductsResult {
   items: ProductRecord[];
   totalCount: number;
+}
+
+interface NormalizedListProductsOptions {
+  page: number;
+  pageSize: number;
+  category?: string;
+  status?: ProductStatus;
+  search?: string;
 }
 
 export interface ProductsRepository {
@@ -77,7 +102,7 @@ export function createProductsRepository(
         const [product] = await db
           .insert(productsTable)
           .values(values)
-          .returning();
+          .returning(productRecordSelection);
 
         if (product === undefined) {
           throw new Error('Failed to create product record.');
@@ -95,7 +120,7 @@ export function createProductsRepository(
 
     async findById(id) {
       const [product] = await db
-        .select()
+        .select(productRecordSelection)
         .from(productsTable)
         .where(eq(productsTable.id, id));
 
@@ -103,16 +128,18 @@ export function createProductsRepository(
     },
 
     async list(options) {
-      const whereClause = buildListWhereClause(options);
-      const offset = (options.page - 1) * options.pageSize;
+      const normalizedOptions = normalizeListOptions(options);
+      const whereClause = buildListWhereClause(normalizedOptions);
+      const offset =
+        (normalizedOptions.page - 1) * normalizedOptions.pageSize;
 
       const [items, totalRows] = await Promise.all([
         db
-          .select()
+          .select(productRecordSelection)
           .from(productsTable)
           .where(whereClause)
           .orderBy(asc(productsTable.name), asc(productsTable.id))
-          .limit(options.pageSize)
+          .limit(normalizedOptions.pageSize)
           .offset(offset),
         db
           .select({ totalCount: sql<number>`count(*)::int` })
@@ -148,6 +175,53 @@ function buildListWhereClause(options: ListProductsOptions) {
   }
 
   return and(...filters);
+}
+
+function normalizeListOptions(
+  options: ListProductsOptions
+): NormalizedListProductsOptions {
+  const normalized: NormalizedListProductsOptions = {
+    page: normalizePage(options.page),
+    pageSize: normalizePageSize(options.pageSize)
+  };
+
+  if (options.category !== undefined) {
+    normalized.category = options.category;
+  }
+
+  if (options.status !== undefined) {
+    normalized.status = options.status;
+  }
+
+  const normalizedSearch = normalizeSearch(options.search);
+
+  if (normalizedSearch !== undefined) {
+    normalized.search = normalizedSearch;
+  }
+
+  return normalized;
+}
+
+function normalizePage(value: number | undefined): number {
+  if (!Number.isInteger(value) || value === undefined || value < 1) {
+    return DEFAULT_PAGE;
+  }
+
+  return value;
+}
+
+function normalizePageSize(value: number | undefined): number {
+  if (!Number.isInteger(value) || value === undefined || value < 1) {
+    return DEFAULT_PAGE_SIZE;
+  }
+
+  return Math.min(value, MAX_PAGE_SIZE);
+}
+
+function normalizeSearch(value: string | undefined): string | undefined {
+  const normalized = value?.trim();
+
+  return normalized === '' ? undefined : normalized;
 }
 
 function isDuplicateSkuViolation(error: unknown): error is {
