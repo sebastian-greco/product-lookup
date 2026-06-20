@@ -18,7 +18,7 @@ describe('products repository', () => {
     name: 'Alpha Phone',
     description: '128GB black',
     category: 'Electronics',
-    price: 999.99,
+    price: '999.99',
     currency: 'EUR'
   };
 
@@ -77,6 +77,25 @@ describe('products repository', () => {
     );
   });
 
+  it('preserves exact price strings without numeric coercion', async () => {
+    const repository = createProductsRepository(app.db);
+
+    const created = await repository.create({
+      sku: 'SKU-EXACT-001',
+      name: 'Exact Price Product',
+      category: 'Electronics',
+      price: '123456789.01',
+      currency: 'EUR'
+    });
+
+    expect(created.price).toBe('123456789.01');
+
+    await expect(repository.findById(created.id as ProductId)).resolves.toMatchObject({
+      id: created.id,
+      price: '123456789.01'
+    });
+  });
+
   it('lists products with filters, pagination, case-insensitive search, and total count', async () => {
     const repository = createProductsRepository(app.db);
 
@@ -84,28 +103,28 @@ describe('products repository', () => {
       sku: 'SKU-101',
       name: 'Alpha iPhone',
       category: 'Electronics',
-      price: 899.99,
+      price: '899.99',
       currency: 'EUR'
     });
     await repository.create({
       sku: 'SKU-102',
       name: 'Bravo iPhone',
       category: 'Electronics',
-      price: 949.99,
+      price: '949.99',
       currency: 'EUR'
     });
     await repository.create({
       sku: 'SKU-103',
       name: 'Charlie iPhone',
       category: 'Electronics',
-      price: 999.99,
+      price: '999.99',
       currency: 'EUR'
     });
     await repository.create({
       sku: 'SKU-104',
       name: 'Delta iPhone',
       category: 'Electronics',
-      price: 799.99,
+      price: '799.99',
       currency: 'EUR',
       status: 'INACTIVE'
     });
@@ -113,7 +132,7 @@ describe('products repository', () => {
       sku: 'SKU-105',
       name: 'Office Chair',
       category: 'Furniture',
-      price: 199.99,
+      price: '199.99',
       currency: 'EUR'
     });
 
@@ -152,14 +171,14 @@ describe('products repository', () => {
       sku: 'SKU-201',
       name: 'Alpha Desk',
       category: 'Furniture',
-      price: 499.99,
+      price: '499.99',
       currency: 'EUR'
     });
     await repository.create({
       sku: 'SKU-202',
       name: 'Bravo Desk',
       category: 'Furniture',
-      price: 599.99,
+      price: '599.99',
       currency: 'EUR'
     });
 
