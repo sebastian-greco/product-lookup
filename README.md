@@ -39,6 +39,8 @@ For local development, copy the example file if you want a checked local startin
 cp .env.example .env
 ```
 
+When `.env` is present, local runs load it automatically before config parsing. That applies to `pnpm dev`, `pnpm db:migrate`, `pnpm db:seed`, and other entrypoints that call `loadConfig()`, while still allowing already-exported shell variables to win.
+
 ## Local database setup
 
 Install dependencies first:
