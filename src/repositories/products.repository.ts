@@ -1,4 +1,4 @@
-import { and, asc, eq, sql } from 'drizzle-orm';
+import { and, asc, eq, ilike, sql } from 'drizzle-orm';
 
 import type { DatabaseClient } from '../db/client.js';
 import { type ProductStatus, productsTable } from '../db/schema/index.js';
@@ -129,21 +129,22 @@ export function createProductsRepository(
 
     async list(options) {
       const normalizedOptions = normalizeListOptions(options);
-      const whereClause = buildListWhereClause(normalizedOptions);
       const offset = (normalizedOptions.page - 1) * normalizedOptions.pageSize;
+      const itemsWhereClause = buildListWhereClause(normalizedOptions);
+      const countWhereClause = buildListWhereClause(normalizedOptions);
 
       const [items, totalRows] = await Promise.all([
         db
           .select(productRecordSelection)
           .from(productsTable)
-          .where(whereClause)
+          .where(itemsWhereClause)
           .orderBy(asc(productsTable.name), asc(productsTable.id))
           .limit(normalizedOptions.pageSize)
           .offset(offset),
         db
           .select({ totalCount: sql<number>`count(*)::int` })
           .from(productsTable)
-          .where(whereClause)
+          .where(countWhereClause)
       ]);
 
       return {
@@ -166,7 +167,7 @@ function buildListWhereClause(options: ListProductsOptions) {
   }
 
   if (options.search !== undefined) {
-    filters.push(sql`${productsTable.name} ILIKE ${`%${options.search}%`}`);
+    filters.push(ilike(productsTable.name, `%${options.search}%`));
   }
 
   if (filters.length === 0) {
