@@ -113,6 +113,8 @@ Use Drizzle for schema and queries. PostgreSQL is the source of truth for persis
 
 Use `node-postgres` as the PostgreSQL driver.
 
+Repositories must explicitly project columns in `select` and `returning` clauses. Do not rely on broad select-all query shapes in repository code.
+
 Database IDs should use prefixed ULIDs, for example:
 
 ```text
@@ -158,6 +160,7 @@ Rules:
 * Enforce a maximum `page_size`.
 * Return total counts when listing resources.
 * Keep pagination response shapes consistent across endpoints.
+* Repositories must normalize or reject unsafe pagination inputs instead of trusting callers blindly.
 
 A typical response should include items plus pagination metadata.
 

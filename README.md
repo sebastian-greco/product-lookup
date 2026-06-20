@@ -1,6 +1,6 @@
 # product-lookup
 
-Phase 1 foundation for a Fastify backend service. The current scope is limited to runtime scaffolding, typed configuration, a health route, project checks, local Postgres development support, and CI.
+Phase 2 backend scaffold for a Fastify service with committed Drizzle migrations, runtime database wiring, product ID/domain helpers, repository integration tests, and a deterministic local seed workflow.
 
 ## Stack
 
@@ -8,32 +8,46 @@ Phase 1 foundation for a Fastify backend service. The current scope is limited t
 - pnpm
 - Fastify 5
 - TypeBox
+- Drizzle ORM
+- PostgreSQL via `pg`
 - Vitest
 - PostgreSQL via Docker Compose for local development
 
-## Getting started
-
-### Prerequisites
+## Prerequisites
 
 - Node.js 20.x
 - pnpm 10+
-- Docker Desktop or compatible Docker runtime
+- Docker Desktop or a compatible Docker runtime
 
-### Install dependencies
+## Environment variables
+
+The app loads configuration from environment variables with these defaults:
+
+- `NODE_ENV` — defaults to `development`. Allowed values: `development`, `test`, `production`.
+- `HOST` — defaults to `0.0.0.0`.
+- `PORT` — defaults to `3000`.
+- `LOG_LEVEL` — defaults to `info`. Allowed values: `debug`, `info`, `warn`, `error`.
+- `DATABASE_URL` — defaults to `postgresql://product_lookup:product_lookup@127.0.0.1:5433/product_lookup`.
+
+`PORT` must be a whole number between `1` and `65535`.
+
+`DATABASE_URL` must be a valid PostgreSQL connection string using the `postgres://` or `postgresql://` scheme.
+
+For local development, copy the example file if you want a checked local starting point:
+
+```bash
+cp .env.example .env
+```
+
+## Local database setup
+
+Install dependencies first:
 
 ```bash
 pnpm install
 ```
 
-### Run the app locally
-
-```bash
-pnpm dev
-```
-
-The development server starts from `src/server.ts`. The current app exposes a single health endpoint at `GET /health`.
-
-### Start local Postgres
+Start the local Postgres container:
 
 ```bash
 docker compose up -d
@@ -42,23 +56,33 @@ docker compose up -d
 The default local database is:
 
 - host: `127.0.0.1`
-- port: `5432`
+- port: `5433`
 - database: `product_lookup`
 - user: `product_lookup`
 - password: `product_lookup`
 
-This database container is for local and hybrid development only. Runtime database wiring, schema, and migrations are intentionally not part of Phase 1 yet.
+Apply migrations and seed deterministic sample data:
 
-## Environment variables
+```bash
+pnpm db:setup
+```
 
-The current app reads configuration from environment variables with these defaults:
+If you only need one step:
 
-- `NODE_ENV` — `development` by default. Allowed values: `development`, `test`, `production`.
-- `HOST` — `0.0.0.0` by default.
-- `PORT` — `3000` by default.
-- `LOG_LEVEL` — `info` by default. Allowed values: `debug`, `info`, `warn`, `error`.
+```bash
+pnpm db:migrate
+pnpm db:seed
+```
 
-`PORT` must be a whole number between `1` and `65535`.
+The seed workflow is intentionally deterministic for local development. Running `pnpm db:seed` clears the current `products` table contents and replaces them with the same fixed sample dataset every time, so repository tests and manual local checks start from a known state.
+
+## Run the app locally
+
+```bash
+pnpm dev
+```
+
+The development server starts from `src/server.ts`. The current app still exposes the health endpoint at `GET /health`; Phase 2 in this branch is focused on database/domain groundwork rather than product API routes.
 
 ## Scripts
 
@@ -68,18 +92,31 @@ The current app reads configuration from environment variables with these defaul
 - `pnpm format` — apply Prettier formatting
 - `pnpm format:check` — verify formatting without writing changes
 - `pnpm typecheck` — run the TypeScript compiler without emitting files
-- `pnpm test` — run Vitest integration tests
+- `pnpm db:generate` — generate Drizzle migration files from schema changes
+- `pnpm db:migrate` — apply committed Drizzle migrations to the configured database
+- `pnpm db:seed` — replace local product data with the deterministic seed dataset
+- `pnpm db:setup` — run migrations and then seed the local database
+- `pnpm test` — run the Vitest suite
+- `pnpm test:watch` — run Vitest in watch mode
 
-## Testing approach
+## Testing and local prerequisites
 
-Phase 1 tests are integration-first and use Fastify's inject support against the app factory in `src/app/build-app.ts`. Tests do not open a network port.
+The project is still integration-first. App-level tests use the Fastify app factory, and repository tests use the configured PostgreSQL database directly through the app's shared Drizzle client.
 
-Current test scaffolding lives under:
+Before running repository or database-related tests locally:
+
+1. start the local Postgres container with `docker compose up -d`
+2. apply migrations with `pnpm db:migrate`
+
+Seeding is optional for the current repository tests because they create and clean up their own records, but `pnpm db:seed` is useful when you want a predictable local dataset for manual inspection.
+
+Current test layout:
 
 ```text
 test/
   helpers/
   integration/
+  unit/
 ```
 
 ## Architecture shape
@@ -90,22 +127,22 @@ The project follows the layer-first structure defined in `AGENTS.md`.
 src/
   app/
   config/
+  db/
+    schema/
+    seeds/
+  ids/
+  repositories/
   routes/
+  types/
 test/
   helpers/
   integration/
+  unit/
 ```
-
-Current Phase 1 code includes:
-
-- app construction in `src/app/`
-- typed environment loading in `src/config/env.ts`
-- route registration in `src/app/register-routes.ts`
-- a health endpoint in `src/routes/health.routes.ts`
 
 ## CI
 
-GitHub Actions runs the Phase 1 checks on pushes and pull requests:
+GitHub Actions currently runs the main project checks on pushes and pull requests:
 
 1. install
 2. format check
@@ -114,20 +151,20 @@ GitHub Actions runs the Phase 1 checks on pushes and pull requests:
 5. test
 6. build
 
-## Phase 1 status
+## Current Phase 2 status
 
-Implemented in this phase:
+Implemented in slices 1-6:
 
-- Fastify runtime scaffold
-- typed config loading
-- development-friendly logging
-- health route
-- integration test scaffold
-- CI workflow
-- Docker Compose for local Postgres
+- tooling, formatting, linting, test, and CI scaffold
+- typed environment loading and Fastify app/runtime setup
+- local PostgreSQL development flow via Docker Compose
+- Drizzle schema definitions and committed migrations
+- runtime PostgreSQL pool and Drizzle client wiring
+- product ID helper with prefixed ULID validation
+- product repository create/find/list methods with integration coverage
+- deterministic local seed workflow for the `products` table
 
 Not implemented yet:
 
-- database runtime integration
-- schema or migrations
-- product APIs or business workflows
+- product HTTP routes and Phase 3 API behavior
+- broader service/business workflow layers beyond the current repository/domain groundwork

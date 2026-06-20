@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1781969004468,
+      "tag": "0000_enable_pg_trgm",
+      "breakpoints": false
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1781969004469,
+      "tag": "0001_magical_human_robot",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781969133962,
+      "tag": "0002_organic_major_mapleleaf",
+      "breakpoints": true
+    }
+  ]
+}
