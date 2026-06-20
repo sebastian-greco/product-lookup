@@ -1,6 +1,6 @@
 # product-lookup
 
-Phase 2 backend scaffold for a Fastify service with committed Drizzle migrations, runtime database wiring, product ID/domain helpers, repository integration tests, and a deterministic local seed workflow.
+Phase 3 backend scaffold for a Fastify service with committed Drizzle migrations, runtime database wiring, product ID/domain helpers, repository integration tests, a deterministic local seed workflow, and a Docker Compose app + database development path.
 
 ## Stack
 
@@ -11,7 +11,7 @@ Phase 2 backend scaffold for a Fastify service with committed Drizzle migrations
 - Drizzle ORM
 - PostgreSQL via `pg`
 - Vitest
-- PostgreSQL via Docker Compose for local development
+- Docker Compose for local app + PostgreSQL development
 
 ## Prerequisites
 
@@ -33,13 +33,27 @@ The app loads configuration from environment variables with these defaults:
 
 `DATABASE_URL` must be a valid PostgreSQL connection string using the `postgres://` or `postgresql://` scheme.
 
-For local development, copy the example file if you want a checked local starting point:
+For local host-run development, copy the example file if you want a checked local starting point:
 
 ```bash
 cp .env.example .env
 ```
 
 When `.env` is present, local runs load it automatically before config parsing. That applies to `pnpm dev`, `pnpm db:migrate`, `pnpm db:seed`, and other entrypoints that call `loadConfig()`, while still allowing already-exported shell variables to win.
+
+Docker Compose keeps that local behavior intact by setting container-only environment variables directly on the `app` service. In Docker, the app uses the `postgres` service hostname inside `DATABASE_URL`; for local host-run workflows, `.env` can keep using `127.0.0.1:5433`.
+
+## Run the full stack in Docker
+
+Build and start both the Fastify app and PostgreSQL:
+
+```bash
+docker compose up --build
+```
+
+The `app` service waits for a healthy `postgres` service, then runs the committed migrations, applies the deterministic seed dataset, and starts the Fastify dev server on `http://127.0.0.1:3000`.
+
+Because the app container runs `pnpm db:setup` on startup, restarting the `app` service resets the seeded `products` dataset to the same known sample records.
 
 ## Local database setup
 
@@ -49,10 +63,10 @@ Install dependencies first:
 pnpm install
 ```
 
-Start the local Postgres container:
+Start only the local Postgres container when you want to run the app directly on your host:
 
 ```bash
-docker compose up -d
+docker compose up -d postgres
 ```
 
 The default local database is:
@@ -78,13 +92,13 @@ pnpm db:seed
 
 The seed workflow is intentionally deterministic for local development. Running `pnpm db:seed` clears the current `products` table contents and replaces them with the same fixed sample dataset every time, so repository tests and manual local checks start from a known state.
 
-## Run the app locally
+## Run the app locally on your host
 
 ```bash
 pnpm dev
 ```
 
-The development server starts from `src/server.ts`. The current app still exposes the health endpoint at `GET /health`; Phase 2 in this branch is focused on database/domain groundwork rather than product API routes.
+The development server starts from `src/server.ts`. The current app still exposes the health endpoint at `GET /health`; this branch keeps the host-run workflow for local development while also supporting a full Docker Compose app + database flow.
 
 ## Scripts
 
@@ -107,7 +121,7 @@ The project is still integration-first. App-level tests use the Fastify app fact
 
 Before running repository or database-related tests locally:
 
-1. start the local Postgres container with `docker compose up -d`
+1. start the local Postgres container with `docker compose up -d postgres`
 2. apply migrations with `pnpm db:migrate`
 
 Seeding is optional for the current repository tests because they create and clean up their own records, but `pnpm db:seed` is useful when you want a predictable local dataset for manual inspection.
@@ -153,20 +167,24 @@ GitHub Actions currently runs the main project checks on pushes and pull request
 5. test
 6. build
 
-## Current Phase 2 status
+## Current repo status
 
-Implemented in slices 1-6:
+Implemented so far:
 
 - tooling, formatting, linting, test, and CI scaffold
 - typed environment loading and Fastify app/runtime setup
 - local PostgreSQL development flow via Docker Compose
+- full Docker Compose app + PostgreSQL development flow
 - Drizzle schema definitions and committed migrations
 - runtime PostgreSQL pool and Drizzle client wiring
 - product ID helper with prefixed ULID validation
 - product repository create/find/list methods with integration coverage
 - deterministic local seed workflow for the `products` table
+- centralized Problem Details error handling
+- product service layer and TypeBox API contracts
+- product API routes for create, get by id, and list behavior
 
 Not implemented yet:
 
-- product HTTP routes and Phase 3 API behavior
-- broader service/business workflow layers beyond the current repository/domain groundwork
+- OpenAPI UI polish and broader API documentation work
+- later-phase documentation/final-readiness items
