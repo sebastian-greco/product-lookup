@@ -90,7 +90,9 @@ describe('products repository', () => {
 
     expect(created.price).toBe('123456789.01');
 
-    await expect(repository.findById(created.id as ProductId)).resolves.toMatchObject({
+    await expect(
+      repository.findById(created.id as ProductId)
+    ).resolves.toMatchObject({
       id: created.id,
       price: '123456789.01'
     });
