@@ -29,7 +29,7 @@ export const productsTable = pgTable(
     price: numeric('price', {
       precision: 12,
       scale: 2,
-      mode: 'number'
+      mode: 'string'
     }).notNull(),
     currency: varchar('currency', { length: 3 }).notNull(),
     status: productStatusEnum('status').default('ACTIVE').notNull(),

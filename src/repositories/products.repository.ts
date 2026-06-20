@@ -34,7 +34,7 @@ export interface CreateProductInput {
   name: string;
   description?: string | null;
   category: string;
-  price: number;
+  price: string;
   currency: string;
   status?: ProductStatus;
 }
