@@ -27,6 +27,11 @@ export const productsRoutes: FastifyPluginAsyncTypebox = async (app) => {
     '/',
     {
       schema: {
+        tags: ['products'],
+        summary: 'Create product',
+        description:
+          'Creates a new product record and returns the created resource.',
+        operationId: 'createProduct',
         body: createProductBodySchema,
         response: {
           201: createProductResponseSchema,
@@ -49,6 +54,11 @@ export const productsRoutes: FastifyPluginAsyncTypebox = async (app) => {
     '/:id',
     {
       schema: {
+        tags: ['products'],
+        summary: 'Get product by id',
+        description:
+          'Returns a single product by its prefixed product identifier.',
+        operationId: 'getProductById',
         params: productParamsSchema,
         response: {
           200: getProductResponseSchema,
@@ -69,6 +79,11 @@ export const productsRoutes: FastifyPluginAsyncTypebox = async (app) => {
     '/',
     {
       schema: {
+        tags: ['products'],
+        summary: 'List products',
+        description:
+          'Returns a paginated list of products with optional category, status, and search filters.',
+        operationId: 'listProducts',
         querystring: listProductsQuerySchema,
         response: {
           200: listProductsResponseSchema,
