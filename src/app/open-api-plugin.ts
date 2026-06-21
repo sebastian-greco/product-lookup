@@ -2,7 +2,9 @@ import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
 import type { FastifyPluginAsync } from 'fastify';
 
-export const openApiPlugin: FastifyPluginAsync = async (app) => {
+const openApiPluginSymbol = Symbol.for('skip-override');
+
+const openApiPluginImpl: FastifyPluginAsync = async (app) => {
   await app.register(fastifySwagger, {
     openapi: {
       openapi: '3.0.3',
@@ -14,6 +16,12 @@ export const openApiPlugin: FastifyPluginAsync = async (app) => {
   });
 
   await app.register(fastifySwaggerUi, {
-    routePrefix: '/documentation'
+    routePrefix: '/documentation',
+    transformSpecificationClone: true,
+    transformSpecification: () => app.swagger()
   });
 };
+
+export const openApiPlugin = Object.assign(openApiPluginImpl, {
+  [openApiPluginSymbol]: true
+});
