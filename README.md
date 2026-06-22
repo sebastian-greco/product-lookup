@@ -108,6 +108,8 @@ OpenAPI is generated from the same TypeBox schemas and route metadata used by Fa
 
 The documented API groups routes under `health` and `products`. Product operations include operation IDs, request schemas, response schemas, pagination metadata, and Problem Details error responses.
 
+For a summary of how AI assistance was used in this repository, see [`docs/ai-disclosure.md`](docs/ai-disclosure.md).
+
 ## API examples
 
 All examples assume the app is running on `http://127.0.0.1:3000`.
